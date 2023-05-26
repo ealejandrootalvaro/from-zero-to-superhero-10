@@ -8,7 +8,7 @@ exports.login = (req, res) => {
   token = jwt.sign(
     { email },
     process.env.JWT_SECRET_KEY,
-    { expiresIn: "1s" }
+    { expiresIn: "1d" }
   )
 
   res
