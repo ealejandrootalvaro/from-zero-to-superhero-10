@@ -2,81 +2,95 @@
 
 ---------
 
-Clase 8
+Clase 10
+
+Como agregar Typescript.
 
 TAREA:
 
-1. Agregar al .env la variable JWT_SECRET_KEY. Usar `.env.example` como ejemplo
-2. En el controller `src/controllers/authController.js` implementar la funcion Login sera un request tipo POST, donde en el body vamos a tener el email del usuario
-
-    ``` const { email } = req.body; ```
-
-    Creal el JWT
-
-    ```js
-    token = jwt.sign(
-        { email: email },
-        process.env.JWT_SECRET_KEY,
-        { expiresIn: "1h" }
-    )
-    ```
-
-    Y retornar el token en la respuesta (Lo necesitaremos mas adelante)
-
-    ```js
-    res
-        .status(200)
-        .json({
-        success: true,
-        data: {
-            token: token,
-        },
-        });
-    ```
-
-3. En el controller `src/controllers/authController.js` implementar la funcion restrictedView. Esta sera una vista protegida donde solo los usuarios autenticados pueden ingresar
-
-    ```js
-    res.status(200)
-    .send("Confidential View")
-    ```
-4. Implementar el middleware `isAuth` que validara el token del usuario `src/middlewares/handlers.js`
-
-    Se usa el header `Authorization` para enviar el token
-    ```js
-    const auth = req.headers.authorization;
-    ```
-
-    Usar la libreria `jsonwebtoken` para verificar el token. Si el token no es valido (ha sido alterado, esta expirado o simplemente no existe) se retorna un codigo http 401  
-
-    ```js
-    let decodedToken;
-
-    try {
-        decodedToken = jwt.verify(auth, process.env.JWT_SECRET_KEY);
-    } catch(err) {
-        console.log(err);
-        res.status(401);
-        res.send(err.message || 'Access forbidden');
-        return;
+1. Instalar typescript
+    ```npm install typescript --save-dev```
+2. Instalar los types de node
+    ```npm install @types/node --save-dev```
+3. Crear el archivo de configuracion de typescript
+    ``` 
+    npx tsc --init --rootDir src --outDir build \
+    --esModuleInterop --resolveJsonModule --lib es6 \
+    --module commonjs --allowJs true --noImplicitAny true 
+    ``` 
+4. Instalar nodemon. Nodemon nos ayuda con el watch mode
+    ``` npm install --save-dev ts-node nodemon rimraf ```
+5. Agregar la configuracion de nodemon. Crear el archivo en la carpeta principal y nombrarlo `nodemon.json`. El archivo debe tener el siguiente codigo
+    ``` 
+    {
+        "watch": ["src"],
+        "ext": ".ts,.js",
+        "ignore": [],
+        "exec": "npx ts-node -r dotenv/config ./src/app.ts"
     }
     ```
-
-    Validar el token decodificado y continuar
-
+6. Ir al archivo `package.json` y modificar el comando `dev` para que sea `npx nodemon`
+    ```
+        "scripts": {
+            "build": "rimraf ./build && tsc",
+            "start": "npm run build && node -r dotenv/config build/app.js",
+            "dev": "npx nodemon -r dotenv/config",
+            "test": "echo \"Error: no test specified\" && exit 1"
+        }
+    ```
+7. Cambiar la extension del archivo `src/app.js` para que sea `src/app.ts`
+8. Cambiar los imports que se hacen con `require(...)` por `import from '...'` para obtener los types de los modulos importados
     ```js
-    if (decodedToken) {
-        next();
-    } else {
-        res.status(401);
-        res.send('Access forbidden');
-        return;
-    }
+        ///Antes
+        const express = require("express");
+
+        // Cambiar por
+        import express from "express";
     ```
 
-5. Realizar pruebas. Usando una herramienta de API realizar una peticion `POST` al endpoint `/login`. Recuerda agregar en el body el valor para `email`. Si la peticion es exitosa toma el valor del `token` e ingresalo en https://jwt.io/. Valida que el token tenga en su payload el email que enviaste en el `POST`
+    EJEMPLO COMPLETO
 
-6. Realiza una peticion `GET` al endpoint `/auth/confidential`. Recuerda usar el header `Authorization` con el token obtenido anteriormente. Deberias ver `Confidential View` 
+    ```js
+    import { config } from 'dotenv';
+    import express from 'express';
+    import mongoose from 'mongoose';
+    import { errorHandler, notFoundHandler } from './middlewares/handlers';
+    import routes from './routes';
 
-7. Realiza pruebas usando JWT invalidos. Ingresa en https://jwt.io/ y genera tokens (o modifica el payload de uno de los obtenidos en el `login`). En este caso al usar un token invalido debes obtener un codigo de error 401 y un mensaje de error explicando porque fallo la validacion
+    config();
 
+    const PORT = process.env.PORT || 3000,
+        app = express();
+
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+    app.use("/", routes);
+    app.use(notFoundHandler);
+    app.use(errorHandler);
+
+    const start = async () => {
+        try {
+            app.listen(PORT, () => {
+                console.log(`Server started on port ${PORT}...`);
+            });
+        } catch (error) {
+            console.error(error);
+            process.exit(1);
+        }
+    };
+
+    start();
+    ```
+
+9. Agregar la carpeta `build` al archivo `.gitignore`
+    ```
+    build
+
+    logs
+    *.log
+    npm-debug.log*
+    yarn-debug.log*
+    yarn-error.log*
+    lerna-debug.log*
+    .pnpm-debug.log*
+    ```
