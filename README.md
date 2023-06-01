@@ -8,6 +8,12 @@ Como agregar Typescript.
 
 TAREA:
 
+0. Crear archivo .env
+    ```
+    MONGO_CONNECTION="mongodb+srv://<username>:<password>@<cluster-name>.mongodb.net/<database-name>?retryWrites=true&w=majority"
+    POSTGRESQL_CONNECTION="postgres://user:pass@example.com:5432/dbname"
+    JWT_SECRET_KEY="secretjwtkeyhere"
+    ```
 1. Instalar typescript
     ```npm install typescript --save-dev```
 2. Instalar los types de node
