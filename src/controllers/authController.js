@@ -5,7 +5,7 @@ exports.login = (req, res) => {
   const { email } = req.body; 
 
   // Verificar usuario y contrasena en base datos.  
-  token = jwt.sign(
+  let token = jwt.sign(
     { email },
     process.env.JWT_SECRET_KEY,
     { expiresIn: "1d" }
